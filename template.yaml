@@ -1,0 +1,87 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: 'NeuroInvest - AWS + Kiro with Bedrock Integration'
+
+Globals:
+  Function:
+    Timeout: 30
+    MemorySize: 512
+    Runtime: nodejs20.x
+    Architectures:
+      - x86_64
+    Environment:
+      Variables:
+        TABLE_NAME: !Ref HistoryTable
+        AWS_REGION: !Ref AWS::Region
+
+Resources:
+  # API Gateway
+  NeuroInvestApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName: prod
+      Cors:
+        AllowMethods: "'*'"
+        AllowHeaders: "'*'"
+        AllowOrigin: "'*'"
+      EndpointConfiguration:
+        Type: REGIONAL
+
+  # Lambda Function with Bedrock permissions
+  InvestmentFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: lambda/
+      Handler: index.handler
+      FunctionName: neuroinvest-function
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref HistoryTable
+        - Statement:
+            - Effect: Allow
+              Action:
+                - bedrock:InvokeModel
+                - bedrock:InvokeModelWithResponseStream
+                - bedrock:Converse
+              Resource: "*"
+      Events:
+        ApiEndpoint:
+          Type: Api
+          Properties:
+            RestApiId: !Ref NeuroInvestApi
+            Path: /recommend
+            Method: GET
+        ApiPostEndpoint:
+          Type: Api
+          Properties:
+            RestApiId: !Ref NeuroInvestApi
+            Path: /recommend
+            Method: POST
+      Environment:
+        Variables:
+          TABLE_NAME: !Ref HistoryTable
+
+  # DynamoDB Table
+  HistoryTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: neuroinvest-history
+      AttributeDefinitions:
+        - AttributeName: userId
+          AttributeType: S
+        - AttributeName: timestamp
+          AttributeType: S
+      KeySchema:
+        - AttributeName: userId
+          KeyType: HASH
+        - AttributeName: timestamp
+          KeyType: RANGE
+      BillingMode: PAY_PER_REQUEST
+      TimeToLiveSpecification:
+        AttributeName: ttl
+        Enabled: true
+
+Outputs:
+  ApiUrl:
+    Description: "API Gateway URL"
+    Value: !Sub "https://${NeuroInvestApi}.execute-api.${AWS::Region}.amazonaws.com/prod"

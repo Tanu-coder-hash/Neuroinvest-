@@ -1,0 +1,51 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: NeuroInvest - AWS + Kiro
+Globals:
+  Function:
+    Timeout: 10
+    MemorySize: 128
+    Runtime: nodejs18.x
+Resources:
+  NeuroInvestApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName: prod
+      Cors:
+        AllowMethods: '''*'''
+        AllowHeaders: '''*'''
+        AllowOrigin: '''*'''
+  InvestmentFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: InvestmentFunction
+      Handler: index.handler
+      Events:
+        ApiEndpoint:
+          Type: Api
+          Properties:
+            RestApiId:
+              Ref: NeuroInvestApi
+            Path: /recommend
+            Method: GET
+    Metadata:
+      SamResourceId: InvestmentFunction
+  HistoryTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: neuroinvest-history
+      AttributeDefinitions:
+      - AttributeName: userId
+        AttributeType: S
+      - AttributeName: timestamp
+        AttributeType: S
+      KeySchema:
+      - AttributeName: userId
+        KeyType: HASH
+      - AttributeName: timestamp
+        KeyType: RANGE
+      BillingMode: PAY_PER_REQUEST
+Outputs:
+  ApiUrl:
+    Value:
+      Fn::Sub: https://${NeuroInvestApi}.execute-api.${AWS::Region}.amazonaws.com/prod
