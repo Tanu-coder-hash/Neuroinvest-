@@ -101,30 +101,6 @@ Kiro is AWS's agentic IDE for spec-driven development. This project uses Kiro in
 
 The spec file defines all requirements, AWS services, and data models used in the project.
 
-
-PROJECT STRUCTURE
-
-NeuroInvest/
-├── .kiro/
-│   └── specs/
-│       └── neuroinvest.spec        (Kiro spec file - required for hackathon)
-├── lambda/
-│   ├── index.js                     (Lambda function with Bedrock integration)
-│   └── package.json                  (Node.js dependencies)
-├── frontend/
-│   ├── src/
-│   │   ├── App.js                   (React frontend with all features)
-│   │   ├── App.css                   (Dark theme styling)
-│   │   └── index.js                   (React entry point)
-│   ├── public/
-│   │   └── index.html                 (HTML template)
-│   └── package.json                    (Frontend dependencies)
-├── template.yaml                        (AWS SAM template)
-├── samconfig.toml                       (SAM configuration)
-├── .gitignore                            (Git ignore file)
-└── README.md                              (This file)
-
-
 HOW TO RUN LOCALLY
 
 Prerequisites:
